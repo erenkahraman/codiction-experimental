@@ -3,7 +3,6 @@ import {
   ScrollView, 
   StyleSheet, 
   TouchableOpacity, 
-  TextInput, 
   Dimensions,
   View,
   Text 
@@ -12,96 +11,50 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
+  withSpring,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 
 const { width, height } = Dimensions.get('window');
 
-interface ShortcutButtonProps {
-  shortcut: string;
-  onPress: (value: string) => void;
-}
+export default function GetStarted() {
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
-function ShortcutButton({ shortcut, onPress }: ShortcutButtonProps) {
-  return (
-    <TouchableOpacity
-      style={styles.shortcutButton}
-      onPress={() => onPress(shortcut)}
-      activeOpacity={0.7}
-    >
-      <Text style={styles.shortcutText}>{shortcut}</Text>
-    </TouchableOpacity>
-  );
-}
+  const options = [
+    'print("Hello, world!")',
+    'echo "Hello, world!"',
+    'printf("Hello, world!")',
+    'print(Hello, world!)'
+  ];
 
-function ProgressDots() {
-  const dots = Array.from({ length: 10 }, (_, i) => i);
-  
-  return (
-    <View style={styles.progressContainer}>
-      {dots.map((_, index) => (
-        <View
-          key={index}
-          style={[
-            styles.progressDot,
-            index === 0 ? styles.activeDot : styles.inactiveDot
-          ]}
-        />
-      ))}
-    </View>
-  );
-}
+  const correctAnswer = 'print("Hello, world!")';
 
-export default function GetStartedScreen() {
-  const router = useRouter();
-  const [showTask, setShowTask] = useState(true);
-  const [code, setCode] = useState('print("Hello, world!")');
-  const [output, setOutput] = useState('Hello, world!');
-
-  const shortcutKeys = ['()', '{}', '[]', '""', "''", ':', ','];
-
-  const insertShortcut = (value: string) => {
-    setCode(code + value);
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
+    setTimeout(() => setShowResult(true), 300);
   };
 
-  const handleRun = () => {
-    // Simple simulation of running Python code
-    if (code.includes('print(') && code.includes('Hello, world!')) {
-      setOutput('Hello, world!');
-    } else {
-      setOutput('Error: Check your code syntax');
-    }
+  const resetQuiz = () => {
+    setSelectedAnswer(null);
+    setShowResult(false);
   };
 
-  const handleSubmit = () => {
-    // TODO: Navigate to next challenge or show success
-    console.log('Code submitted:', code);
-  };
-
-  const handleNextChallenge = () => {
-    // TODO: Navigate to next challenge
-    console.log('Next challenge');
-  };
-
-  const taskOpacity = useSharedValue(showTask ? 1 : 0);
-  const taskAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: withTiming(taskOpacity.value, { duration: 300 }),
-      transform: [{ 
-        translateY: withTiming(showTask ? 0 : -10, { duration: 300 }) 
-      }],
-    };
-  });
+  const resultOpacity = useSharedValue(0);
 
   React.useEffect(() => {
-    taskOpacity.value = showTask ? 1 : 0;
-  }, [showTask]);
+    resultOpacity.value = withTiming(showResult ? 1 : 0, { duration: 400 });
+  }, [showResult]);
+
+  const resultAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: resultOpacity.value,
+      transform: [{
+        translateY: withTiming(showResult ? 0 : 10, { duration: 300 })
+      }]
+    };
+  });
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -109,109 +62,125 @@ export default function GetStartedScreen() {
         colors={['#0f172a', '#1e293b', '#0f172a']}
         style={styles.backgroundGradient}
       >
-        <ThemedView style={styles.content}>
-          {/* Top Navigation */}
-          <View style={styles.topNav}>
-            <View style={styles.levelInfo}>
-              <ProgressDots />
-              <ThemedText style={styles.levelText}>Level 1: Print Your First Line</ThemedText>
-            </View>
-            <ThemedText style={styles.xpText}>XP: 0</ThemedText>
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.heroTitle}>⚡ CodeQuest: Terminal Trials</Text>
+            <Text style={styles.heroSubtitle}>
+              Master Python and fix corrupted systems — one function at a time.
+            </Text>
           </View>
 
-          {/* Task & Assistant */}
-          {showTask && (
-            <Animated.View style={[styles.taskCard, taskAnimatedStyle]}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowTask(false)}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="close" size={16} color="rgba(255,255,255,0.6)" />
-              </TouchableOpacity>
-              
-              <View style={styles.taskContent}>
-                <Text style={styles.teacherEmoji}>👩‍🏫</Text>
-                <View style={styles.taskText}>
-                  <ThemedText style={styles.taskTitle}>Let&apos;s Start with Printing</ThemedText>
-                  <ThemedText style={styles.taskDescription}>
-                    Welcome to your first challenge! Let&apos;s write your first line of Python code. 
-                    Print the sentence: <Text style={styles.codeHighlight}>Hello, world!</Text>
-                  </ThemedText>
+          {/* Mission Brief */}
+          <View style={styles.briefCard}>
+            <Text style={styles.briefTitle}>🎮 Mission Briefing</Text>
+            <Text style={styles.briefText}>
+              Systems are crashing. To restore balance, you must learn Python syntax and execute critical commands correctly.
+            </Text>
+          </View>
+
+          {/* Question Card */}
+          <View style={styles.questionCard}>
+            <Text style={styles.questionTitle}>Quick Challenge</Text>
+            <Text style={styles.questionText}>
+              Which of the following prints <Text style={styles.codeHighlight}>Hello, world!</Text> correctly in Python?
+            </Text>
+            
+            {/* Options */}
+            <View style={styles.optionsContainer}>
+              {options.map((option, index) => {
+                const isSelected = selectedAnswer === option;
+                const isCorrect = option === correctAnswer;
+                const showFeedback = showResult && isSelected;
+                
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleAnswerSelect(option)}
+                    style={[
+                      styles.optionButton,
+                      isSelected && styles.selectedOption,
+                      showFeedback && isCorrect && styles.correctOption,
+                      showFeedback && !isCorrect && styles.incorrectOption,
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.optionContent}>
+                      <View style={styles.optionLabel}>
+                        <Text style={styles.optionLabelText}>{String.fromCharCode(65 + index)}</Text>
+                      </View>
+                      <Text style={styles.optionText}>{option}</Text>
+                      {showFeedback && (
+                        <MaterialIcons 
+                          name={isCorrect ? "check-circle" : "cancel"} 
+                          size={20} 
+                          color={isCorrect ? "#22c55e" : "#ef4444"} 
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Result */}
+          {showResult && (
+            <Animated.View style={[styles.resultCard, resultAnimatedStyle]}>
+              <View style={styles.resultContent}>
+                <MaterialIcons 
+                  name={selectedAnswer === correctAnswer ? "celebration" : "lightbulb-outline"} 
+                  size={28} 
+                  color={selectedAnswer === correctAnswer ? "#22c55e" : "#f59e0b"} 
+                />
+                <View style={styles.resultTextContainer}>
+                  <Text style={styles.resultTitle}>
+                    {selectedAnswer === correctAnswer ? "Perfect! 🎉" : "Almost there!"}
+                  </Text>
+                  <Text style={styles.resultDescription}>
+                    {selectedAnswer === correctAnswer 
+                      ? "You nailed it! print() is Python's built-in function for displaying text."
+                      : "The correct answer is A. In Python, we use print() function with quotes and parentheses."
+                    }
+                  </Text>
                 </View>
               </View>
             </Animated.View>
           )}
 
-          {/* Code Editor */}
-          <View style={styles.editorCard}>
-            <ThemedText style={styles.sectionLabel}>Code Editor</ThemedText>
-            
-            <TextInput
-              value={code}
-              onChangeText={setCode}
-              style={styles.codeInput}
-              multiline
-              placeholder="Type your Python code here..."
-              placeholderTextColor="#64748b"
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-            />
-
-            {/* Mobile Shortcut Toolbar */}
-            <View style={styles.shortcutToolbar}>
-              {shortcutKeys.map((key) => (
-                <ShortcutButton
-                  key={key}
-                  shortcut={key}
-                  onPress={insertShortcut}
-                />
-              ))}
-            </View>
-
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.runButton]}
-                onPress={handleRun}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={styles.actionButtonText}>Run</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.actionButton, styles.submitButton]}
-                onPress={handleSubmit}
-                activeOpacity={0.8}
-              >
-                <ThemedText style={styles.actionButtonText}>Submit</ThemedText>
-              </TouchableOpacity>
-            </View>
+          {/* Action Buttons */}
+          <View style={styles.actionSection}>
+            {!showResult ? (
+              <View style={styles.hintContainer}>
+                <MaterialIcons name="lightbulb-outline" size={16} color="#64748b" />
+                <Text style={styles.hintText}>💡 Think about Python's print function syntax</Text>
+              </View>
+            ) : (
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity style={styles.tryAgainButton} onPress={resetQuiz}>
+                  <Text style={styles.tryAgainText}>Try Again</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.continueButton}>
+                  <LinearGradient
+                    colors={['#4f46e5', '#6366f1']}
+                    style={styles.continueGradient}
+                  >
+                    <Text style={styles.continueText}>Continue</Text>
+                    <MaterialIcons name="arrow-forward" size={18} color="white" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
-          {/* Console Output */}
-          <View style={styles.consoleCard}>
-            <ThemedText style={styles.sectionLabel}>Console Output</ThemedText>
-            <View style={styles.consoleOutput}>
-              <Text style={styles.outputText}>{output}</Text>
-            </View>
+          {/* Tip */}
+          <View style={styles.tipCard}>
+            <Text style={styles.tipTitle}>💡 Pro Tip</Text>
+            <Text style={styles.tipText}>
+              In Python, print() is a function. Always remember to use parentheses and quotes for strings!
+            </Text>
           </View>
-
-          {/* Bottom Navigation */}
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNextChallenge}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#4f46e5', '#3b82f6']}
-              style={styles.nextButtonGradient}
-            >
-              <ThemedText style={styles.nextButtonText}>Next Challenge</ThemedText>
-              <MaterialIcons name="chevron-right" size={16} color="white" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </ThemedView>
+        </View>
       </LinearGradient>
     </ScrollView>
   );
@@ -227,218 +196,229 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 32,
-    gap: 24,
-    backgroundColor: 'transparent',
+    paddingBottom: 40,
   },
-  topNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  header: {
     alignItems: 'center',
+    marginBottom: 32,
   },
-  levelInfo: {
-    flex: 1,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    gap: 4,
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: 'white',
+    textAlign: 'center',
     marginBottom: 8,
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 22,
   },
-  activeDot: {
-    backgroundColor: '#facc15',
-  },
-  inactiveDot: {
-    backgroundColor: '#334155',
-  },
-  levelText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#cbd5e1',
-  },
-  xpText: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  taskCard: {
-    backgroundColor: '#1f2937',
+  briefCard: {
+    backgroundColor: '#1e293b',
     borderRadius: 16,
     padding: 20,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: '#334155',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    padding: 8,
-  },
-  taskContent: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'flex-start',
-  },
-  teacherEmoji: {
-    fontSize: 32,
-  },
-  taskText: {
-    flex: 1,
-  },
-  taskTitle: {
+  briefTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  taskDescription: {
-    fontSize: 14,
+  briefText: {
+    fontSize: 15,
     color: '#cbd5e1',
-    lineHeight: 20,
+    lineHeight: 22,
+  },
+  questionCard: {
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  questionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 12,
+  },
+  questionText: {
+    fontSize: 16,
+    color: '#cbd5e1',
+    lineHeight: 24,
+    marginBottom: 20,
   },
   codeHighlight: {
     color: '#22c55e',
-    fontFamily: 'monospace',
-  },
-  editorCard: {
-    backgroundColor: '#1f2937',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-    gap: 16,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#94a3b8',
-  },
-  codeInput: {
-    backgroundColor: '#0f172a',
-    color: '#22c55e',
-    fontFamily: 'monospace',
-    fontSize: 14,
-    padding: 16,
-    borderRadius: 8,
-    minHeight: 120,
-    textAlignVertical: 'top',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  shortcutToolbar: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  shortcutButton: {
-    backgroundColor: '#475569',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  shortcutText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  runButton: {
-    backgroundColor: '#22c55e',
-  },
-  submitButton: {
-    backgroundColor: '#2563eb',
-  },
-  actionButtonText: {
-    fontSize: 14,
     fontWeight: '600',
-    color: 'white',
+    fontFamily: 'monospace',
   },
-  consoleCard: {
-    backgroundColor: '#1f2937',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+  optionsContainer: {
     gap: 12,
   },
-  consoleOutput: {
-    backgroundColor: '#000',
+  optionButton: {
+    backgroundColor: '#0f172a',
+    borderWidth: 2,
+    borderColor: '#334155',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  outputText: {
+  selectedOption: {
+    borderColor: '#6366f1',
+    backgroundColor: '#1e1b4b',
+  },
+  correctOption: {
+    borderColor: '#22c55e',
+    backgroundColor: '#064e3b',
+  },
+  incorrectOption: {
+    borderColor: '#ef4444',
+    backgroundColor: '#450a0a',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  optionLabel: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionLabelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+  },
+  optionText: {
+    flex: 1,
+    fontSize: 15,
     color: 'white',
     fontFamily: 'monospace',
-    fontSize: 14,
   },
-  nextButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#4f46e5',
+  resultCard: {
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#334155',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  nextButtonGradient: {
+  resultContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  resultTextContainer: {
+    flex: 1,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 8,
+  },
+  resultDescription: {
+    fontSize: 15,
+    color: '#cbd5e1',
+    lineHeight: 22,
+  },
+  actionSection: {
+    marginBottom: 24,
+  },
+  hintContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    gap: 8,
+    paddingVertical: 16,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  hintText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  tryAgainButton: {
+    flex: 1,
+    paddingVertical: 16,
+    backgroundColor: '#374151',
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4b5563',
+  },
+  tryAgainText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#d1d5db',
+  },
+  continueButton: {
+    flex: 2,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  continueGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
     gap: 8,
   },
-  nextButtonText: {
-    fontSize: 14,
+  continueText: {
+    fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  tipCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  tipTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#f59e0b',
+    marginBottom: 8,
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    lineHeight: 20,
   },
 }); 
